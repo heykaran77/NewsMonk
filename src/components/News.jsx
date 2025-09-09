@@ -1,136 +1,110 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import NewsCard from "./NewsCard";
 import Spinner from "./Spinner";
 import PropTypes from "prop-types";
 import InfiniteScroll from "react-infinite-scroll-component";
 
-export default class News extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      articles: [],
-      loading: false,
-      page: 1,
-      totalResults: 0,
-    };
-    document.title = `${this.capitalizeWord(this.props.category)} - News Monk`;
-  }
+const News = ({ pageSize = 10, category = "general", ...props }) => {
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalResults, setTotalResults] = useState(0);
+  // document.title = `${capitalizeWord(category)} - News Monk`;
 
-  static defaultProps = {
-    pageSize: 10,
-    category: "general",
-  };
-  static propTypes = {
-    pageSize: PropTypes.number,
-    category: PropTypes.string,
-  };
-
-  capitalizeWord = (string) => {
+  const capitalizeWord = (string = "") => {
     return string.charAt(0).toUpperCase() + string.toLowerCase().slice(1);
   };
 
-  async updateNews() {
-    this.props.setProgress(10);
-    let url = `https://newsapi.org/v2/top-headlines?country=us&category=${this.props.category}&apiKey=${this.props.apiKey}&page=${this.state.page}&pageSize=${this.props.pageSize}`;
-    this.setState({ loading: true });
+  const updateNews = async () => {
+    props.updateProcess(10);
+    let url = `https://newsapi.org/v2/top-headlines?country=us&category=${category}&apiKey=${props.apiKey}&page=${page}&pageSize=${pageSize}`;
+    setLoading(true);
     let data = await fetch(url);
-    this.props.setProgress(30);
+    props.updateProcess(30);
     let parsedData = await data.json();
     console.log(parsedData);
-    this.props.setProgress(60);
-    this.setState({
-      articles: parsedData.articles,
-      totalResults: parsedData.totalResults,
-      loading: false,
-    });
-    this.props.setProgress(100);
-  }
+    props.updateProcess(60);
+    setArticles(parsedData.articles);
+    setTotalResults(parsedData.totalResults);
+    setLoading(false);
+    props.updateProcess(100);
+  };
 
-  fetchMoreData = async () => {
-    this.setState({
-      page: this.state.page + 1,
-    });
-    let url = `https://newsapi.org/v2/top-headlines?country=us&category=${this.props.category}&apiKey=${this.props.apiKey}&page=${this.state.page}&pageSize=${this.props.pageSize}`;
-
+  const fetchMoreData = async () => {
+    setPage((prevPage) => prevPage + 1);
+    let url = `https://newsapi.org/v2/top-headlines?country=us&category=${category}&apiKey=${props.apiKey}&page=${page}&pageSize=${pageSize}`;
     let data = await fetch(url);
     let parsedData = await data.json();
     console.log(parsedData);
-    this.setState({
-      articles: this.state.articles.concat(parsedData.articles),
-      totalResults: parsedData.totalResults,
-    });
+    setArticles((prevArticles) => prevArticles.concat(parsedData.articles));
+    setTotalResults(parsedData.totalResults);
   };
 
-  handlePrev = async () => {
-    this.setState({
-      page: this.state.page - 1,
-    });
-    this.updateNews();
+  const handlePrev = async () => {
+    setPage((prevPage) => prevPage - 1);
+    updateNews();
   };
 
-  handleNext = async () => {
-    this.setState({
-      page: this.state.page + 1,
-    });
-    this.updateNews();
+  const handleNext = async () => {
+    setPage((prevPage) => prevPage + 1);
+    updateNews();
   };
+  useEffect(() => {
+    updateNews();
+  }, []);
 
-  async componentDidMount() {
-    this.updateNews();
-  }
-  render() {
-    return (
-      <>
-        <h2 className="d-flex justify-content-center my-4 text-center">
-          <b>
-            NewsMonk - Top {this.capitalizeWord(this.props.category)} Headlines
-          </b>
-        </h2>
-        {this.state.loading && <Spinner />}
-        <InfiniteScroll
-          dataLength={this.state.articles.length}
-          next={this.fetchMoreData}
-          hasMore={this.state.articles.length < this.state.totalResults}
-          loader={<Spinner />}>
-          <div className="container">
-            <div className="row">
-              {this.state.articles.map((element, idx) => {
-                return (
-                  <div className="col-md-4" key={idx}>
-                    <NewsCard
-                      title={
-                        element.title ? (
-                          element.title
-                        ) : (
-                          <i>No Title Available</i>
-                        )
-                      }
-                      description={
-                        element.description ? (
-                          element.description
-                        ) : (
-                          <i>No Description Available</i>
-                        )
-                      }
-                      author={element.author ? element.author : "Unknown"}
-                      published={element.publishedAt}
-                      source={
-                        element.source.name ? element.source.name : "Unknown"
-                      }
-                      imgUrl={
-                        element.urlToImage
-                          ? element.urlToImage
-                          : "https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg"
-                      }
-                      newsUrl={element.url}
-                    />
-                  </div>
-                );
-              })}
-            </div>
+  return (
+    <>
+      <h2 className="d-flex justify-content-center my-4 text-center">
+        <b>NewsMonk - Top {capitalizeWord(category)} Headlines</b>
+      </h2>
+      {loading && <Spinner />}
+      <InfiniteScroll
+        dataLength={articles.length}
+        next={fetchMoreData}
+        hasMore={articles.length < totalResults}
+        loader={<Spinner />}>
+        <div className="container">
+          <div className="row">
+            {articles.map((element, idx) => {
+              return (
+                <div className="col-md-4" key={idx}>
+                  <NewsCard
+                    title={
+                      element.title ? element.title : <i>No Title Available</i>
+                    }
+                    description={
+                      element.description ? (
+                        element.description
+                      ) : (
+                        <i>No Description Available</i>
+                      )
+                    }
+                    author={element.author ? element.author : "Unknown"}
+                    published={element.publishedAt}
+                    source={
+                      element.source.name ? element.source.name : "Unknown"
+                    }
+                    imgUrl={
+                      element.urlToImage
+                        ? element.urlToImage
+                        : "https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg"
+                    }
+                    newsUrl={element.url}
+                  />
+                </div>
+              );
+            })}
           </div>
-        </InfiniteScroll>
-      </>
-    );
-  }
-}
+        </div>
+      </InfiniteScroll>
+    </>
+  );
+};
+
+News.propTypes = {
+  pageSize: PropTypes.number,
+  category: PropTypes.string,
+};
+
+export default News;
