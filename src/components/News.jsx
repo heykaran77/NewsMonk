@@ -9,7 +9,6 @@ const News = ({ pageSize = 10, category = "general", ...props }) => {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [totalResults, setTotalResults] = useState(0);
-  // document.title = `${capitalizeWord(category)} - News Monk`;
 
   const capitalizeWord = (string = "") => {
     return string.charAt(0).toUpperCase() + string.toLowerCase().slice(1);
@@ -31,8 +30,10 @@ const News = ({ pageSize = 10, category = "general", ...props }) => {
   };
 
   const fetchMoreData = async () => {
+    let url = `https://newsapi.org/v2/top-headlines?country=us&category=${category}&apiKey=${
+      props.apiKey
+    }&page=${page + 1}&pageSize=${pageSize}`;
     setPage((prevPage) => prevPage + 1);
-    let url = `https://newsapi.org/v2/top-headlines?country=us&category=${category}&apiKey=${props.apiKey}&page=${page}&pageSize=${pageSize}`;
     let data = await fetch(url);
     let parsedData = await data.json();
     console.log(parsedData);
@@ -40,17 +41,9 @@ const News = ({ pageSize = 10, category = "general", ...props }) => {
     setTotalResults(parsedData.totalResults);
   };
 
-  const handlePrev = async () => {
-    setPage((prevPage) => prevPage - 1);
-    updateNews();
-  };
-
-  const handleNext = async () => {
-    setPage((prevPage) => prevPage + 1);
-    updateNews();
-  };
   useEffect(() => {
     updateNews();
+    document.title = `${capitalizeWord(category)} - News Monk`;
   }, []);
 
   return (
