@@ -1,0 +1,20 @@
+.fixed-img {
+  height: 300px; /* Set a fixed height */
+  object-fit: cover; /* Crop and center the image */
+}
+
+.card-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-title {
+  min-height: 2.8em;
+}
+
+.card-text {
+  min-height: 4.5em;
+}
